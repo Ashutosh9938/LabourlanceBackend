@@ -44,7 +44,7 @@ const jobsRouter = require('./routes/jobs');
 
 
 app.get('/', (req, res) => {
-  res.send('Welcome to the API');
+  res.send('Welcome to the LaborlanceAPI');
 });
 
 // Use routes
