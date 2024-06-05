@@ -43,7 +43,9 @@ const authRouter = require('./routes/auth');
 const jobsRouter = require('./routes/jobs');
 
 
-
+app.get('/', (req, res) => {
+  res.send('Welcome to the API');
+});
 
 // Use routes
 app.use('/api/v1/auth', authRouter);
