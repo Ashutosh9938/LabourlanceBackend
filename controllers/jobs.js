@@ -92,23 +92,38 @@ const getJob = async (req, res) => {
 
 const updateJob = async (req, res) => {
   const {
-    body: { Title, workDescription },
+    body: { Title, workDescription, jobType, jobLocation, price, image },
     user: { userId },
     params: { id: jobId },
   } = req;
 
-  if (!Title || !workDescription) {
-    throw new BadRequestError('Title or workDescription fields cannot be empty');
-  }
-
+  // Get the job
   const job = await Job.findOne({ _id: jobId, userId: userId });
   if (!job) {
     throw new NotFoundError(`No job with id ${jobId} found for this user`);
   }
 
-  job.Title = Title;
-  job.workDescription = workDescription;
+  // Update job fields
+  if (Title !== undefined && Title !== null && Title !== '') {
+    job.Title = Title;
+  }
+  if (workDescription !== undefined && workDescription !== null && workDescription !== '') {
+    job.workDescription = workDescription;
+  }
+  if (jobType !== undefined && jobType !== null && jobType !== '') {
+    job.jobType = jobType;
+  }
+  if (jobLocation !== undefined && jobLocation !== null && jobLocation !== '') {
+    job.jobLocation = jobLocation;
+  }
+  if (price !== undefined && price !== null) {
+    job.price = price;
+  }
+  if (image !== undefined && image !== null && image !== '') {
+    job.image = image;
+  }
 
+  // Save the updated job
   await job.save();
 
   res.status(StatusCodes.OK).json({ job });
