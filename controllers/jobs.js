@@ -5,17 +5,29 @@ const { BadRequestError, NotFoundError } = require('../errors');
 const Job = require('../models/Job');
 const mongoose = require('mongoose');
 const  streamifier=require( 'streamifier')
+const User = require('../models/User'); 
 
-const createJob = async (req, res) => {//job create garcha 
+const createJob = async (req, res) => {
   if (!req.user || !req.user.userId) {
     throw new BadRequestError('Please provide user');
   }
-
-  req.body.userId = req.user.userId;
-
-  const job = await Job.create(req.body);
+  const userId = req.user.userId;
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new BadRequestError('User not found');
+  }
+  const jobData = {
+    ...req.body,
+    userId,
+    userName: user.name,
+    userLastName: user.lastName,
+    userEmail: user.email
+  };
+  const job = await Job.create(jobData);
   res.status(StatusCodes.CREATED).json({ job });
 };
+
+
 const getAllPosts = async (req, res) => {//shows all the jobs posted by every user
   const job = await Job.find({}).limit(10).sort('-createdAt');
 
