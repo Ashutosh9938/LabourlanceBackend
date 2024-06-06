@@ -33,8 +33,6 @@ const userSchema = new mongoose.Schema({
             },
             message: 'Please provide a valid email'
         }
-    },newPassword:{
-        type:String,
     },
     password:{
         type:String,
@@ -47,8 +45,7 @@ const userSchema = new mongoose.Schema({
     role:{
         type:String,
         enum:['WorkProvider','Worker'],
-        default:'WorkProvide',
-        // required:[true,'please select your role']
+        default:'WorkProvide'
     },
     isActive: {
         type: Boolean,
@@ -57,8 +54,6 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.pre('save', async function () {
-    // console.log(this.modifiedPaths());
-    // console.log(this.isModified('name'));
     if (!this.isModified('password')) return;
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);

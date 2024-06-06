@@ -97,13 +97,10 @@ const updateJob = async (req, res) => {
     params: { id: jobId },
   } = req;
 
-  // Get the job
   const job = await Job.findOne({ _id: jobId, userId: userId });
   if (!job) {
     throw new NotFoundError(`No job with id ${jobId} found for this user`);
   }
-
-  // Update job fields
   if (Title !== undefined && Title !== null && Title !== '') {
     job.Title = Title;
   }
@@ -123,7 +120,6 @@ const updateJob = async (req, res) => {
     job.image = image;
   }
 
-  // Save the updated job
   await job.save();
 
   res.status(StatusCodes.OK).json({ job });
