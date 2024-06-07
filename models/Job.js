@@ -49,8 +49,8 @@ const JobSchema = new mongoose.Schema(
       required: true,
     },
     image: {
-      type: String,
-      required: true,
+      type: [String],
+      require:true
     },
   },
   { timestamps: true }

@@ -7,24 +7,55 @@ const mongoose = require('mongoose');
 const  streamifier=require( 'streamifier')
 const User = require('../models/User'); 
 
-const createJob = async (req, res) => {
+const createJob = async (req, res, next) => {
   if (!req.user || !req.user.userId) {
-    throw new BadRequestError('Please provide user');
+    return next(new BadRequestError('Please provide user'));
   }
+
   const userId = req.user.userId;
   const user = await User.findById(userId);
   if (!user) {
-    throw new BadRequestError('User not found');
+    return next(new BadRequestError('User not found'));
   }
-  const jobData = {
-    ...req.body,
-    userId,
-    userName: user.name,
-    userLastName: user.lastName,
-    userEmail: user.email
-  };
-  const job = await Job.create(jobData);
-  res.status(StatusCodes.CREATED).json({ job });
+
+  if (!req.files || !req.files.media) {
+    return next(new BadRequestError('No media files uploaded'));
+  }
+
+  const mediaFiles = Array.isArray(req.files.media) ? req.files.media : [req.files.media];
+  
+  try {
+    const uploadPromises = mediaFiles.map(file =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { resource_type: 'auto', folder: 'job_media' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result.secure_url);
+          }
+        );
+        stream.end(file.data);
+      })
+    );
+
+    const uploadedMedia = await Promise.all(uploadPromises);
+
+    const jobData = {
+      ...req.body,
+      userId,
+      userName: user.name,
+      userLastName: user.lastName,
+      userEmail: user.email,
+      image: uploadedMedia
+    };
+
+    const job = await Job.create(jobData);
+    res.status(StatusCodes.CREATED).json({ job });
+  } catch (error) {
+    if (!res.headersSent) {
+      res.status(error instanceof NotFoundError ? StatusCodes.NOT_FOUND : StatusCodes.BAD_REQUEST).json({ error: error.message });
+    }
+  }
 };
 
 
@@ -188,58 +219,58 @@ const showStats = async (req, res) => {
   res.status(StatusCodes.OK).json({ defaultStats, monthlyApplications });
 };
 
-const uploadProductMedia = async (req, res) => {
-  try {
-    console.log('Incoming files:', req.files);
+// const uploadProductMedia = async (req, res) => {
+//   try {
+//     console.log('Incoming files:', req.files);
 
-    if (!req.files || !req.files.media) {
-      throw new BadRequestError('No File Uploaded');
-    }
-    const productMedia = req.files.media;
-    const files = Array.isArray(productMedia) ? productMedia : [productMedia];
-    console.log('Files to process:', files);
-    const areValidFiles = files.every(file => file.mimetype.startsWith('image') || file.mimetype.startsWith('video'));
-    if (!areValidFiles) {
-      throw new BadRequestError('Please upload image or video files only');
-    }
-    const maxImageSize = 5 * 1024 * 1024; // 5MB for images
-    const maxVideoSize = 50 * 1024 * 1024; // 50MB for videos
+//     if (!req.files || !req.files.media) {
+//       throw new BadRequestError('No File Uploaded');
+//     }
+//     const productMedia = req.files.media;
+//     const files = Array.isArray(productMedia) ? productMedia : [productMedia];
+//     console.log('Files to process:', files);
+//     const areValidFiles = files.every(file => file.mimetype.startsWith('image') || file.mimetype.startsWith('video'));
+//     if (!areValidFiles) {
+//       throw new BadRequestError('Please upload image or video files only');
+//     }
+//     const maxImageSize = 5 * 1024 * 1024; // 5MB for images
+//     const maxVideoSize = 50 * 1024 * 1024; // 50MB for videos
 
-    files.forEach(file => {
-      if (file.mimetype.startsWith('image') && file.size > maxImageSize) {
-        throw new BadRequestError('Please upload images smaller than 5MB');
-      }
-      if (file.mimetype.startsWith('video') && file.size > maxVideoSize) {
-        throw new BadRequestError('Please upload videos smaller than 50MB');
-      }
-    });
+//     files.forEach(file => {
+//       if (file.mimetype.startsWith('image') && file.size > maxImageSize) {
+//         throw new BadRequestError('Please upload images smaller than 5MB');
+//       }
+//       if (file.mimetype.startsWith('video') && file.size > maxVideoSize) {
+//         throw new BadRequestError('Please upload videos smaller than 50MB');
+//       }
+//     });
 
-    const uploadPromises = files.map(file => new Promise((resolve, reject) => {
-      const resourceType = file.mimetype.startsWith('image') ? 'image' : 'video';
-      const uploadStream = cloudinary.uploader.upload_stream({
-        use_filename: true,
-        folder: 'file-upload',
-        resource_type: resourceType,
-      }, (error, result) => {
-        if (error) {
-          reject(new InternalServerError('Cloudinary Upload Failed'));
-        } else {
-          resolve({ src: result.secure_url });
-        }
-      });
+//     const uploadPromises = files.map(file => new Promise((resolve, reject) => {
+//       const resourceType = file.mimetype.startsWith('image') ? 'image' : 'video';
+//       const uploadStream = cloudinary.uploader.upload_stream({
+//         use_filename: true,
+//         folder: 'file-upload',
+//         resource_type: resourceType,
+//       }, (error, result) => {
+//         if (error) {
+//           reject(new InternalServerError('Cloudinary Upload Failed'));
+//         } else {
+//           resolve({ src: result.secure_url });
+//         }
+//       });
 
-      streamifier.createReadStream(file.data).pipe(uploadStream);
-    }));
+//       streamifier.createReadStream(file.data).pipe(uploadStream);
+//     }));
 
-    const uploadedMedia = await Promise.all(uploadPromises);
+//     const uploadedMedia = await Promise.all(uploadPromises);
 
-    return res.status(StatusCodes.OK).json({ media: uploadedMedia });
-  } catch (error) {
-    // Handle errors
-    console.error('Upload error:', error);
-    throw error;
-  }
-};
+//     return  uploadedMedia ;
+//   } catch (error) {
+//     // Handle errors
+//     console.error('Upload error:', error);
+//     throw error;
+//   }
+// };
 
 
 
