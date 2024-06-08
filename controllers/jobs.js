@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const  streamifier=require( 'streamifier')
 const User = require('../models/User'); 
 
+
 const createJob = async (req, res, next) => {
   if (!req.user || !req.user.userId) {
     return next(new BadRequestError('Please provide user'));
@@ -75,7 +76,7 @@ const getAllPosts = async (req, res) => {//shows all the jobs posted by every us
     jobLocation: job.jobLocation,
     price: job.price,
     image: job.image,
-    date: job.createdAt,
+    createdAt: job.createdAt,
     updatedAt: job.updatedAt
   }));
   res.status(StatusCodes.OK).json({ jobs: formattedJobs, count: formattedJobs.length });
@@ -118,9 +119,24 @@ const getAllJobs = async (req, res) => {
   const jobs = await result;
 
   const totalJobs = await Job.countDocuments(queryObject);
+  const formattedJobs = jobs.map(job => ({
+    id: job._id,
+    Title: job.Title,
+    workDescription: job.workDescription,
+    status: job.status,
+    userId: job.userId,
+    userName: job.userName,
+    userLastName: job.userLastName,
+    userEmail: job.userEmail,
+    jobType: job.jobType,
+    jobLocation: job.jobLocation,
+    price: job.price,
+    image: job.image,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt
+  }));
 
-
-  res.status(StatusCodes.OK).json({ jobs, totalJobs});
+  res.status(StatusCodes.OK).json({ jobs:formattedJobs, totalJobs});
 };
 const getJob = async (req, res) => {
   const { id: jobId } = req.params;
@@ -166,10 +182,26 @@ const updateJob = async (req, res) => {
   if (image !== undefined && image !== null && image !== '') {
     job.image = image;
   }
+  const formattedJobs = jobs.map(job => ({
+    id: job._id,
+    Title: job.Title,
+    workDescription: job.workDescription,
+    status: job.status,
+    userId: job.userId,
+    userName: job.userName,
+    userLastName: job.userLastName,
+    userEmail: job.userEmail,
+    jobType: job.jobType,
+    jobLocation: job.jobLocation,
+    price: job.price,
+    image: job.image,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt
+  }));
 
   await job.save();
 
-  res.status(StatusCodes.OK).json({ job });
+  res.status(StatusCodes.OK).json({ job:formattedJobs });
 };
 
 const deleteJob = async (req, res) => {
