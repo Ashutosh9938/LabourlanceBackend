@@ -7,7 +7,6 @@ const mongoose = require('mongoose');
 const  streamifier=require( 'streamifier')
 const User = require('../models/User'); 
 
-
 const createJob = async (req, res, next) => {
   if (!req.user || !req.user.userId) {
     return next(new BadRequestError('Please provide user'));
@@ -56,7 +55,6 @@ const createJob = async (req, res, next) => {
     }
   }
 };
-
 const getAllPosts = async (req, res) => {//shows all the jobs posted by every user
   const jobs = await Job.find({}).limit(10).sort('-createdAt');
   const formattedJobs = jobs.map(job => ({
@@ -115,11 +113,27 @@ const getAllJobs = async (req, res) => {
   const jobs = await result;
 
   const totalJobs = await Job.countDocuments(queryObject);
+  const formattedJobs = jobs.map(job => ({
+    id: job._id,
+    Title: job.Title,
+    workDescription: job.workDescription,
+    status: job.status,
+    userId: job.userId,
+    userName: job.userName,
+    userLastName: job.userLastName,
+    userEmail: job.userEmail,
+    jobType: job.jobType,
+    jobLocation: job.jobLocation,
+    price: job.price,
+    image: job.image,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt
+  }));
 
   res.status(StatusCodes.OK).json({ jobs:formattedJobs, totalJobs});
 };
 const getJob = async (req, res) => {
-  const { id: jobId } = req.params;
+  const { jobId } = req.body;
 
   console.log(`Fetching job with ID: ${jobId}`);
 
@@ -129,7 +143,7 @@ const getJob = async (req, res) => {
     console.log(`No job found with ID: ${jobId}`);
     throw new NotFoundError(`No job with id ${jobId}`);
   }
-  const formattedJobs = job.map(job => ({
+  const formattedJobs = ({
     id: job._id,
     Title: job.Title,
     workDescription: job.workDescription,
@@ -144,60 +158,93 @@ const getJob = async (req, res) => {
     image: job.image,
     createdAt: job.createdAt,
     updatedAt: job.updatedAt
-  }));
+  });
   
 
   res.status(StatusCodes.OK).json({ job:formattedJobs});
 };
 
-const updateJob = async (req, res) => {
+const updateJob = async (req, res, next) => {
   const {
-    body: { Title, workDescription, jobType, jobLocation, price, image },
-    user: { userId },
-    body: {  jobId },
+    body: { jobId, Title, workDescription, jobType, jobLocation, price },
+    files, // Files uploaded by the user
+    user: { userId }
   } = req;
 
-  const job = await Job.findOne({ _id: jobId, userId: userId });
-  if (!job) {
-    throw new NotFoundError(`No job with id ${jobId} found for this user`);
-  }
-  if (Title !== undefined && Title !== null && Title !== '') {
-    job.Title = Title;
-  }
-  if (workDescription !== undefined && workDescription !== null && workDescription !== '') {
-    job.workDescription = workDescription;
-  }
-  if (jobType !== undefined && jobType !== null && jobType !== '') {
-    job.jobType = jobType;
-  }
-  if (jobLocation !== undefined && jobLocation !== null && jobLocation !== '') {
-    job.jobLocation = jobLocation;
-  }
-  if (price !== undefined && price !== null) {
-    job.price = price;
-  }
-  if (image !== undefined && image !== null && image !== '') {
-    job.image = image;
-  }
-  await job.save();
-  const formattedJobs = job.map(job => ({
-    id: job._id,
-    Title: job.Title,
-    workDescription: job.workDescription,
-    status: job.status,
-    userId: job.userId,
-    userName: job.userName,
-    userLastName: job.userLastName,
-    userEmail: job.userEmail,
-    jobType: job.jobType,
-    jobLocation: job.jobLocation,
-    price: job.price,
-    image: job.image,
-    createdAt: job.createdAt,
-    updatedAt: job.updatedAt
-  }));
+  try {
+    const job = await Job.findOne({ _id: jobId, userId });
+    if (!job) {
+      return next(new NotFoundError(`No job with id ${jobId} found for this user`));
+    }
 
-  res.status(StatusCodes.OK).json({ job:formattedJobs });
+    // Update job fields only if they are provided in the request body
+    if (Title !== undefined && Title !== null && Title !== '') {
+      job.Title = Title;
+    }
+    if (workDescription !== undefined && workDescription !== null && workDescription !== '') {
+      job.workDescription = workDescription;
+    }
+    if (jobType !== undefined && jobType !== null && jobType !== '') {
+      job.jobType = jobType;
+    }
+    if (jobLocation !== undefined && jobLocation !== null && jobLocation !== '') {
+      job.jobLocation = jobLocation;
+    }
+    if (price !== undefined && price !== null) {
+      job.price = price;
+    }
+
+    // Check if media file is provided and it's either an image or video
+    if (!files || !files.media) {
+      return next(new BadRequestError('No media file uploaded'));
+    }
+
+    const mediaFile = files.media;
+
+    const uploadPromise = new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { resource_type: 'auto', folder: 'job_media' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result.secure_url);
+        }
+      );
+      stream.end(mediaFile.data);
+    });
+
+    const uploadedMediaUrl = await uploadPromise;
+
+    // Update job image with Cloudinary URL
+    job.image = uploadedMediaUrl;
+
+    // Save the updated job details
+    await job.save();
+
+    // Construct the formatted job object to send in the response
+    const formattedJob = {
+      id: job._id,
+      Title: job.Title,
+      workDescription: job.workDescription,
+      status: job.status,
+      userId: job.userId,
+      userName: job.userName,
+      userLastName: job.userLastName,
+      userEmail: job.userEmail,
+      jobType: job.jobType,
+      jobLocation: job.jobLocation,
+      price: job.price,
+      image: job.image,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt
+    };
+
+    // Send the formatted job object in the response
+    res.status(StatusCodes.OK).json({ job: formattedJob });
+  } catch (error) {
+    if (!res.headersSent) {
+      res.status(error instanceof NotFoundError ? StatusCodes.NOT_FOUND : StatusCodes.BAD_REQUEST).json({ error: error.message });
+    }
+  }
 };
 
 const deleteJob = async (req, res) => {
@@ -315,8 +362,6 @@ const showStats = async (req, res) => {
 //     throw error;
 //   }
 // };
-
-
 
 
 module.exports = {

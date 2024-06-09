@@ -10,10 +10,8 @@ router.route('/user').get(authenticateUser,getAllJobs)
 router.route('/stats').get(authenticateUser,showStats);
 
 
-router
-  .route('/:id')
-  .get(authenticateUser,getJob)
-  .delete(authenticateUser,testUser, deleteJob)
-  .patch(authenticateUser,testUser, updateJob);
+router.route('/singlejob').get(authenticateUser,getJob)
+  router.route('/delete').delete(authenticateUser,testUser, deleteJob)
+  router.route('/edit').patch(authenticateUser,testUser, updateJob);
 
 module.exports = router;
