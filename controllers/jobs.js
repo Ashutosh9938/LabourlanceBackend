@@ -6,22 +6,7 @@ const Job = require('../models/Job');
 const mongoose = require('mongoose');
 const  streamifier=require( 'streamifier')
 const User = require('../models/User'); 
-const formattedJobs = jobs.map(job => ({
-  id: job._id,
-  Title: job.Title,
-  workDescription: job.workDescription,
-  status: job.status,
-  userId: job.userId,
-  userName: job.userName,
-  userLastName: job.userLastName,
-  userEmail: job.userEmail,
-  jobType: job.jobType,
-  jobLocation: job.jobLocation,
-  price: job.price,
-  image: job.image,
-  createdAt: job.createdAt,
-  updatedAt: job.updatedAt
-}));
+
 
 const createJob = async (req, res, next) => {
   if (!req.user || !req.user.userId) {
@@ -74,6 +59,22 @@ const createJob = async (req, res, next) => {
 
 const getAllPosts = async (req, res) => {//shows all the jobs posted by every user
   const jobs = await Job.find({}).limit(10).sort('-createdAt');
+  const formattedJobs = jobs.map(job => ({
+    id: job._id,
+    Title: job.Title,
+    workDescription: job.workDescription,
+    status: job.status,
+    userId: job.userId,
+    userName: job.userName,
+    userLastName: job.userLastName,
+    userEmail: job.userEmail,
+    jobType: job.jobType,
+    jobLocation: job.jobLocation,
+    price: job.price,
+    image: job.image,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt
+  }));
   res.status(StatusCodes.OK).json({ jobs: formattedJobs, count: formattedJobs.length });
 };
 
@@ -128,6 +129,23 @@ const getJob = async (req, res) => {
     console.log(`No job found with ID: ${jobId}`);
     throw new NotFoundError(`No job with id ${jobId}`);
   }
+  const formattedJobs = job.map(job => ({
+    id: job._id,
+    Title: job.Title,
+    workDescription: job.workDescription,
+    status: job.status,
+    userId: job.userId,
+    userName: job.userName,
+    userLastName: job.userLastName,
+    userEmail: job.userEmail,
+    jobType: job.jobType,
+    jobLocation: job.jobLocation,
+    price: job.price,
+    image: job.image,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt
+  }));
+  
 
   res.status(StatusCodes.OK).json({ job:formattedJobs});
 };
@@ -162,6 +180,22 @@ const updateJob = async (req, res) => {
     job.image = image;
   }
   await job.save();
+  const formattedJobs = job.map(job => ({
+    id: job._id,
+    Title: job.Title,
+    workDescription: job.workDescription,
+    status: job.status,
+    userId: job.userId,
+    userName: job.userName,
+    userLastName: job.userLastName,
+    userEmail: job.userEmail,
+    jobType: job.jobType,
+    jobLocation: job.jobLocation,
+    price: job.price,
+    image: job.image,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt
+  }));
 
   res.status(StatusCodes.OK).json({ job:formattedJobs });
 };
