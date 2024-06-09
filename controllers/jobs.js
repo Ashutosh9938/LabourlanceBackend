@@ -35,26 +35,24 @@ const createJob = async (req, res, next) => {
   }
 
   if (!req.files || !req.files.media) {
-    return next(new BadRequestError('No media files uploaded'));
+    return next(new BadRequestError('No media file uploaded'));
   }
 
-  const mediaFiles = Array.isArray(req.files.media) ? req.files.media : [req.files.media];
-  
-  try {
-    const uploadPromises = mediaFiles.map(file =>
-      new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { resource_type: 'auto', folder: 'job_media' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result.secure_url);
-          }
-        );
-        stream.end(file.data);
-      })
-    );
+  const mediaFile = req.files.media;
 
-    const uploadedMedia = await Promise.all(uploadPromises);
+  try {
+    const uploadPromise = new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { resource_type: 'auto', folder: 'job_media' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result.secure_url);
+        }
+      );
+      stream.end(mediaFile.data);
+    });
+
+    const uploadedMediaUrl = await uploadPromise;
 
     const jobData = {
       ...req.body,
@@ -62,7 +60,7 @@ const createJob = async (req, res, next) => {
       userName: user.name,
       userLastName: user.lastName,
       userEmail: user.email,
-      image: uploadedMedia
+      image: uploadedMediaUrl
     };
 
     const job = await Job.create(jobData);
@@ -74,11 +72,8 @@ const createJob = async (req, res, next) => {
   }
 };
 
-
 const getAllPosts = async (req, res) => {//shows all the jobs posted by every user
   const jobs = await Job.find({}).limit(10).sort('-createdAt');
-  
-
   res.status(StatusCodes.OK).json({ jobs: formattedJobs, count: formattedJobs.length });
 };
 
