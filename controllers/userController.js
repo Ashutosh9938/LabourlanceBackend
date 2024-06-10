@@ -87,7 +87,8 @@ const tempUserStore = {};
 
 const updateUserPassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  const phoneNumber = req.user.phoneNumber; // Get phone number from the request object
+  const phoneNumber = req.user.phoneNumber; 
+  const user = await User.findOne({ _id: req.user.userId });
 
   if (!oldPassword || !newPassword) {
       throw new CustomError.BadRequestError('Please provide both values');
@@ -95,6 +96,10 @@ const updateUserPassword = async (req, res) => {
 
   if (oldPassword === newPassword) {
       throw new CustomError.BadRequestError('Old password and new password cannot be the same');
+  }
+  const isPasswordCorrect = await user.comparePassword(oldPassword);
+  if (!isPasswordCorrect) {
+      throw new CustomError.UnauthenticatedError('Invalid Credentials');
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -136,10 +141,7 @@ const passwordVerify = async (req, res) => {
       throw new CustomError.NotFoundError('User not found');
   }
 
-  const isPasswordCorrect = await user.comparePassword(oldPassword);
-  if (!isPasswordCorrect) {
-      throw new CustomError.UnauthenticatedError('Invalid Credentials');
-  }
+  
 
   user.password = newPassword;
   await user.save();
