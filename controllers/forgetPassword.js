@@ -1,111 +1,107 @@
 const User = require('../models/User');
-const mongoose = require('mongoose');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
-const {createJWT}= require('../utils');
-const twilio = require('twilio');
 
+let otpStore = {};
+let tempUserStore = {};
+let otpVerifiedUser = null;
 
-const client = twilio(process.env.Account_SID, process.env.Auth_Token);
-const otpStore = {};
-const tempUserStore = {};
+const emailVerification = async (req, res) => {
+    const { email } = req.body;
 
-const verifyPhonenumber = async (req, res) => {
-    const { phoneNumber, email, newPassword, confirmPassword } = req.body;
-    const phoneNumberRegex = /^\+977\s\d{10}$/;
-    const isValidPhoneNumber = phoneNumber && phoneNumberRegex.test(phoneNumber);
-  
-    if (!email && !phoneNumber) {
-      throw new CustomError.BadRequestError('Either email or phone number must be provided');
+    if (!email) {
+        throw new CustomError.BadRequestError('Email must be provided');
     }
-  
+
     try {
-      if (phoneNumber) {
-        if (!isValidPhoneNumber) {
-          throw new CustomError.BadRequestError('Invalid phone number format');
-        }
-  
-        const existingUser = await User.findOne({ phoneNumber });
-        if (!existingUser) {
-          throw new CustomError.BadRequestError('Phone number not registered');
-        }
-  
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        otpStore[otp] = existingUser._id; // Store user ID associated with OTP
-  
-        await client.messages.create({
-          body: `Your OTP code is ${otp}`,
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: phoneNumber,
-        });
-  
-        return res.status(StatusCodes.CREATED).json({ msg: 'OTP sent to phone number. Please verify.' });
-      }
-      //test only since we have only one phone number
-      else if (email) {
         const existingUser = await User.findOne({ email });
+
         if (!existingUser) {
-          throw new CustomError.BadRequestError('Email not registered');
+            throw new CustomError.BadRequestError('Email not registered');
         }
-  
-        if (!newPassword || !confirmPassword) {
-          throw new CustomError.BadRequestError('New password and confirm password fields cannot be empty');
-        }
-  
-        if (newPassword !== confirmPassword) {
-          throw new CustomError.BadRequestError('Passwords do not match');
-        }
-  
-        existingUser.password = newPassword; 
-        await existingUser.save();
-  
-        return res.status(StatusCodes.OK).json({ msg: 'Password updated successfully' });
-      }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const userId = existingUser._id.toString();
+        console.log(userId);
+
+        otpStore[otp] = userId;
+        tempUserStore[userId] = existingUser;
+
+        console.log(`OTP for ${email}: ${otp}`);
+
+        return res.status(StatusCodes.OK).json({ msg: 'OTP sent successfully', otp });
     } catch (error) {
-      console.error('Error in processing request:', error);
-      throw new CustomError.BadRequestError('Failed to process request');
+        console.error('Error in email verification:', error);
+        throw new CustomError.BadRequestError('Failed to process request');
     }
-  };
+};
 
-  const resetPassword = async (req, res) => {
-    const { otp, newPassword, confirmPassword } = req.body;
-  
-    // Log the OTP store and provided OTP
-    console.log('otpStore:', otpStore);
-    console.log('Provided OTP:', otp);
-  
-    const userId = otpStore[otp];
-    console.log('Stored User ID:', userId);
-  
-    if (!userId) {
-      throw new CustomError.BadRequestError('Invalid or expired OTP');
-    }
-  
-    if (!newPassword || !confirmPassword) {
-      throw new CustomError.BadRequestError('New password and confirm password fields cannot be empty');
-    }
-  
-    if (newPassword !== confirmPassword) {
-      throw new CustomError.BadRequestError('New password and confirm password do not match');
-    }
-  
-    // Log the query and result
-    const user = await User.findById(userId);
-    console.log('User found:', user);
-  
-    if (!user) {
-      throw new CustomError.BadRequestError('No user found for this ID');
-    }
-  
-    // Hash the password before saving (if necessary)
-    user.password = newPassword; 
-    await user.save();
-  
-    delete otpStore[otp];
-    delete tempUserStore[user.phoneNumber];
-  
-    res.status(StatusCodes.OK).json({ msg: 'Password updated successfully' });
-  };
+const otpVerify = async (req, res) => {
+    const { otp } = req.body;
 
+    try {
+        if (!otp) {
+            throw new CustomError.BadRequestError('OTP must be provided');
+        }
 
-  module.exports={verifyPhonenumber,resetPassword}
+        const userId = otpStore[otp];
+
+        if (!userId) {
+            console.log('Stored OTP:', otpStore);
+            throw new CustomError.BadRequestError('Invalid or expired OTP');
+        }
+
+        delete otpStore[otp];
+        otpVerifiedUser = userId;
+
+        return res.status(StatusCodes.OK).json({ msg: 'OTP verified successfully', verified: true });
+    } catch (error) {
+        console.error('Error in OTP verification:', error);
+        throw new CustomError.BadRequestError('Failed to process request');
+    }
+};
+
+const forgetPassword = async (req, res) => {
+    try {
+        const { newPassword, confirmPassword } = req.body;
+
+        if (!otpVerifiedUser) {
+            throw new CustomError.BadRequestError('Invalid OTP');
+        }
+
+        if (!(newPassword && confirmPassword)) {
+            throw new CustomError.BadRequestError('Please provide all required values');
+        }
+
+        if (newPassword !== confirmPassword) {
+            throw new CustomError.BadRequestError('Passwords do not match');
+        }
+
+        if (newPassword.length < 6) {
+            throw new CustomError.BadRequestError('Password should be at least 6 characters');
+        }
+
+        const user = tempUserStore[otpVerifiedUser];
+
+        if (!user) {
+            throw new CustomError.BadRequestError('No registration details found for this user');
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        delete tempUserStore[otpVerifiedUser];
+        otpVerifiedUser = null;
+
+        return res.status(StatusCodes.OK).json({ msg: 'Password updated successfully' });
+    } catch (error) {
+        console.error('Error in password reset:', error);
+        throw new CustomError.BadRequestError('Failed to process request');
+    }
+};
+
+module.exports = {
+    emailVerification,
+    otpVerify,
+    forgetPassword,
+};

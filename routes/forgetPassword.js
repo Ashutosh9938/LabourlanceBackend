@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const {verifyPhonenumber,resetPassword}=require('../controllers/forgetPassword')
+const { emailVerification,
+    otpVerify,
+    forgetPassword }=require('../controllers/forgetPassword')
 
-router.route('/verifyPhonenumber').post(verifyPhonenumber)
-router.route('/resetPassword').patch(resetPassword)
+router.route('/verifyemail').post(emailVerification)
+router.route('/verify').post(otpVerify)
+router.route('/resetPassword').patch( forgetPassword )
 
 module.exports=router
