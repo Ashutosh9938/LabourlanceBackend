@@ -1,8 +1,9 @@
+// In your route setup file
 const express = require('express');
 const router = express.Router();
+const sendNotificationController = require('../controllers/notification');
+const attachTokenInterceptor = require('../middleware/getAccessTokenMiddleware');
 
-const sendNotification  = require('../controllers/notification');
-
-router.post('/send-notification', sendNotification);
+router.post('/singleNotification', attachTokenInterceptor, sendNotificationController);
 
 module.exports = router;

@@ -57,7 +57,7 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/jobs', authenticateUser, jobsRouter);
 app.use('/api/v1/users', authenticateUser,userRouter);
 app.use('/api/v1/forgetPassword',forgetPassword)
-app.use('/api/v1/notification', authenticateUser, notification);
+app.use('/api/v1/notification', notification);
 
 // Error handling middleware
 app.use(notFoundMiddleware);

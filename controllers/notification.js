@@ -1,34 +1,29 @@
-const express = require('express');
-const router = express.Router();
-const User = require('../models/User');
-const admin = require('../db/firebase');
+require('dotenv').config();
+const axios = require('axios');
 
-const sendNotification = async (req, res) => { 
-    try {
-        const { userId, fcmToken, title, body } = req.body;
+const firebaseUrl = process.env.FIREBASE_URL;
 
-        const user = await User.findByIdAndUpdate(userId, { $addToSet: { fcmTokens: fcmToken }, $pull: { fcmTokens: { $ne: fcmToken } } }, { new: true });
-        console.log('user',user);
-        if (!user) {
-            res.status(404).json({ msg: 'User not found' });
-        } else {
-          
-            const message = {
-                notification: {
-                    title: title || 'Default Title',
-                    body: body || 'Default Body'
-                },
-                token: fcmToken
-            };
-            
-       
-            const response=await admin.messaging().send(message);
-console.log('response',response);
-            res.status(200).json({ msg: 'FCM token saved successfully and message sent' });
+const sendNotification = async (req, res) => {
+  try {
+    const { title, body, registrationToken } = req.body;
+
+    const message = {
+      "message": {
+        "token": registrationToken,
+        "notification": {
+          "body": body,
+          "title": title
         }
-    } catch (error) {
-        res.status(500).json({ msg: 'Error saving FCM token or sending message', error: error.message });
-    }
-}
+      }
+    };
 
-module.exports =  sendNotification ;
+    const response = await axios.post(firebaseUrl, message);
+    console.log('Response:', response.data);
+    res.status(200).send({ message: 'Notification sent successfully', data: response.data });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send({ message: 'Failed to send notification' });
+  }
+};
+
+module.exports = sendNotification;
