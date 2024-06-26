@@ -78,26 +78,23 @@ const getAllPosts = async (req, res) => {//shows all the jobs posted by every us
 
 const getAllJobs = async (req, res) => {
   const jobId = req.body.jobId;
-  console.log('Job ID:', jobId);
+  const userId = req.user.userId;
 
   try {
-    const job = await Job.findById(jobId);
-    if (!job) {
-      return res.status(404).json({ message: 'Job not found' });
+    let queryObject = {};
+
+    if (jobId) {
+      const job = await Job.findById(jobId);
+      if (!job) {
+        return res.status(404).json({ message: 'Job not found' });
+      }
+      queryObject.userId = job.userId;
+    } else {
+      queryObject.userId = userId;
     }
 
-    const userId = job.userId;
-    console.log('User ID:', userId);
-
-    const queryObject = { userId };
-
-    let result = Job.find(queryObject);
-
-    const jobs = await result;
-    console.log('Jobs Found:', jobs.length);
-
+    const jobs = await Job.find(queryObject);
     const totalJobs = await Job.countDocuments(queryObject);
-    console.log('Total Jobs:', totalJobs);
 
     const formattedJobs = jobs.map(job => ({
       id: job._id,
@@ -122,6 +119,7 @@ const getAllJobs = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 const getJob = async (req, res) => {
   const { jobId } = req.body;
