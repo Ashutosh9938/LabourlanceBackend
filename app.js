@@ -29,7 +29,6 @@ cloudinary.config({
 });
 
 
-
 app.set('trust proxy', 1);
 
 app.use(express.static(path.resolve(__dirname, './client/build')));
