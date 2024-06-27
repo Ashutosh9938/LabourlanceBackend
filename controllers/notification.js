@@ -3,6 +3,7 @@ const axios = require('axios');
 
 const firebaseUrl = process.env.FIREBASE_URL;
 
+
 const sendNotification = async (req, res) => {
   try {
     console.log('Request received:', req.body);
