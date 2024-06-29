@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const {sendNotification , storeFcmToken} = require('../controllers/notification');
-const authenticate = require('../middleware/authentication');
+const { sendNotification, storeFcmToken } = require('../controllers/notification');
+const attachTokenInterceptor = require('../middleware/getAccessTokenMiddleware');
 
-router.post('/store-fcm-token', authenticate, storeFcmToken);
-router.post('/send-notification', authenticate, sendNotification);
+// Use the middleware to attach the token interceptor
+router.post('/store-fcm-token', storeFcmToken);
+router.post('/send-notification', attachTokenInterceptor, sendNotification);
 
 module.exports = router;
