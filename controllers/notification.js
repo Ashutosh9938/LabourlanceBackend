@@ -27,7 +27,7 @@ const storeFcmToken = async (req, res) => {
 
     res.status(200).send({ message: 'FCM token stored successfully' });
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error:', error.message); 
     res.status(500).send({ message: 'Failed to store FCM token', error: error.message });
   }
 };
@@ -54,8 +54,7 @@ const sendNotification = async (req, res) => {
           title: title
         }
       }
-    };
-
+    };//gyjgh
     const promises = allTokens.map(token => {
       const tokenMessage = { ...message, message: { ...message.message, token: token } };
       console.log('Sending request to Firebase with message:', tokenMessage);
