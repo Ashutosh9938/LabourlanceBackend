@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const sendNotificationController = require('../controllers/Notification');
-const attachTokenInterceptor = require('../middleware/getAccessTokenMiddleware');
+const {sendNotification , storeFcmToken} = require('../controllers/notification');
+const authenticate = require('../middleware/authentication');
 
-router.post('/singleNotification', attachTokenInterceptor, sendNotificationController);
+router.post('/store-fcm-token', authenticate, storeFcmToken);
+router.post('/send-notification', authenticate, sendNotification);
 
 module.exports = router;
