@@ -99,7 +99,6 @@ const login = async (req, res) => {
     res.status(StatusCodes.CREATED).json({ user: tokenUser, token });
 };
 
-
 const logout = async (req, res) => {
     res.cookie('token','logout',{
         httpOnly:true,
