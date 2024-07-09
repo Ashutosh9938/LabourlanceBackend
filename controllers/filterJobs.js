@@ -13,7 +13,6 @@ const searchJobs = async (req, res) => {
     const queryObject = 
    {} ;
   
-    // Add jobType to queryObject if it's provided and is one of the valid values
     const validJobTypes = ['Technical', 'Household', 'Repair', 'Construction', 'Cleaning', 'Gardening', 'Cooking', 'Shifting Service', 'Others'];
     if (jobType && validJobTypes.includes(jobType)) {
       queryObject.jobType = jobType;
