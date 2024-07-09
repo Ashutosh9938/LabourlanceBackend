@@ -26,7 +26,6 @@ if(!sort){
     } else if (sort === 'oldest') {
       result = result.sort('createdAt');
     } 
-
     const jobs = await result;
     const totalJobs = await Job.countDocuments(queryObject);
     console.log('Jobs Found:', jobs);
