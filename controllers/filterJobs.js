@@ -45,7 +45,7 @@ if(!sort){
       createdAt: job.createdAt,
       updatedAt: job.updatedAt
     }));
-  
+
     res.status(StatusCodes.OK).json({ jobs: formattedJobs, totalJobs });
 };
 
