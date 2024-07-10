@@ -10,8 +10,7 @@ const User = require('../models/User');
 const searchJobs = async (req, res) => {
     const { jobType, sort } = req.body;
   
-    const queryObject = 
-   {} ;
+    const queryObject = {} ;
   
     const validJobTypes = ['Technical', 'Household', 'Repair', 'Construction', 'Cleaning', 'Gardening', 'Cooking', 'Shifting Service', 'Others'];
     if (jobType && validJobTypes.includes(jobType)) {
