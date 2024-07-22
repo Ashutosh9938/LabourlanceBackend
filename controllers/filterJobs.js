@@ -10,8 +10,10 @@ const User = require('../models/User');
 const searchJobs = async (req, res) => {
     const { jobType, sort } = req.body;
   
-    const queryObject = {} ;
+    const queryObject = 
+   {} ;
   
+    // Add jobType to queryObject if it's provided and is one of the valid values
     const validJobTypes = ['Technical', 'Household', 'Repair', 'Construction', 'Cleaning', 'Gardening', 'Cooking', 'Shifting Service', 'Others'];
     if (jobType && validJobTypes.includes(jobType)) {
       queryObject.jobType = jobType;
@@ -25,6 +27,7 @@ if(!sort){
     } else if (sort === 'oldest') {
       result = result.sort('createdAt');
     } 
+
     const jobs = await result;
     const totalJobs = await Job.countDocuments(queryObject);
     console.log('Jobs Found:', jobs);
@@ -44,7 +47,7 @@ if(!sort){
       createdAt: job.createdAt,
       updatedAt: job.updatedAt
     }));
-
+  
     res.status(StatusCodes.OK).json({ jobs: formattedJobs, totalJobs });
 };
 
