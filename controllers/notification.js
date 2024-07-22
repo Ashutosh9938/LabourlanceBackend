@@ -171,7 +171,6 @@ const sendNotificationOfJobPosted = async (title, body, posterUserId) => {
 
   const userIds = users.map(user => user._id);
   const tokens = await FcmToken.find({ userId: { $in: userIds } }).exec();
-  
   if (!tokens) {
     throw new Error('Failed to fetch tokens');
   }
