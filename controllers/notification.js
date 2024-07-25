@@ -239,8 +239,24 @@ const sendNotificationToUser = async (title, body, userId) => {
     throw new BadRequestError('Failed to send notifications');
   }
 };
+const getUserNotifications = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    if (!userId) {
+      return res.status(400).send({ message: 'User ID is required' });
+    }
+
+    const notifications = await Notification.find({ userId }).sort({ createdAt: -1 }).exec();
+
+    res.status(200).send({ notifications });
+  } catch (error) {
+    console.error('Error fetching notifications:', error.message);
+    res.status(500).send({ message: 'Failed to fetch notifications', error: error.message });
+  }
+};
 
 
 
 
-module.exports = { sendNotification, storeFcmToken,sendNotificationOfJobPosted,sendNotificationToUser };
+module.exports = { sendNotification, storeFcmToken,sendNotificationOfJobPosted,sendNotificationToUser,getUserNotifications };
