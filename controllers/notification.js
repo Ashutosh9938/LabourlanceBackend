@@ -125,7 +125,7 @@ const sendNotificationOfJobPosted = async (title, body, posterUserId) => {
     const message = {
       notification: {
         title,
-        body
+        body,
       }
     };
 
@@ -158,7 +158,7 @@ const sendNotificationOfJobPosted = async (title, body, posterUserId) => {
       const notification = new Notification({
         userId: token.userId,
         title,
-        body
+        body,
       });
       return notification.save();
     });

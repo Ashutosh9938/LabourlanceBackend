@@ -15,12 +15,12 @@ const createJob = async (req, res, next) => {
 
   const userId = req.user.userId;
   const user = await User.findById(userId);
-  
+
   if (!user) {
     return next(new BadRequestError('User not found'));
   }
 
-  if (user.role !== 'work provider') {
+  if (user.role !== 'WorkProvider' ) {
     return next(new BadRequestError('Only work providers can create jobs'));
   }
 
@@ -55,6 +55,13 @@ const createJob = async (req, res, next) => {
       jobType,
       price,
       image: uploadedMediaUrl,
+      applications: [],
+      assignedWorker: {
+        workerId: null,
+        workerName: null,
+      },
+      completedBy: null,
+      completedByName: null,
       // jobLocation: {
       //   type: 'Point',
       //   coordinates: [parseFloat(longitude), parseFloat(latitude)]
@@ -68,12 +75,12 @@ const createJob = async (req, res, next) => {
     await sendNotificationOfJobPosted(notificationTitle, notificationBody, userId);
     res.status(StatusCodes.CREATED).json({ job });
   } catch (error) {
+    console.error('Error creating job:', error.message);
     if (!res.headersSent) {
       res.status(500).json({ message: 'Server error' });
     }
   }
 };
-
 const applyForJob = async (req, res, next) => {
   const { jobId } = req.body;
   const workerId = req.user.userId;
@@ -92,6 +99,7 @@ const applyForJob = async (req, res, next) => {
     return next(new BadRequestError('Job not found'));
   }
 
+  // Ensure applications field is initialized
   if (!job.applications) {
     job.applications = [];
   }
@@ -300,17 +308,23 @@ const getJob = async (req, res, next) => {
         updatedAt: job.updatedAt,
         workDescription: job.workDescription,
         applications: job.applications.map(app => ({
-          workerId: app.workerId._id,
-          workerName: app.workerId.name
+          workerId: app.workerId ? app.workerId._id : null,
+          workerName: app.workerId ? app.workerId.name : null
         })),
-        assignedWorker: job.assignedWorker ? {
+        assignedWorker: job.assignedWorker && job.assignedWorker.workerId ? {
           workerId: job.assignedWorker.workerId._id,
           workerName: job.assignedWorker.workerId.name
-        } : null,
+        } : {
+          workerId: null,
+          workerName: null
+        },
         completedBy: job.completedBy ? {
           workerId: job.completedBy._id,
           name: job.completedBy.name
-        } : null
+        } : {
+          workerId: null,
+          name: null
+        }
       }
     });
   } catch (error) {
