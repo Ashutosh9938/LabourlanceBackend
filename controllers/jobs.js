@@ -92,7 +92,6 @@ const applyForJob = async (req, res, next) => {
     return next(new BadRequestError('Job not found'));
   }
 
-  // Ensure applications field is initialized
   if (!job.applications) {
     job.applications = [];
   }
@@ -123,7 +122,7 @@ const applyForJob = async (req, res, next) => {
     return next(new BadRequestError('Failed to send notification'));
   }
 
-  res.status(StatusCodes.OK).json({ message: 'Application submitted successfully',jobId:job._id });
+  res.status(StatusCodes.OK).json({ message: 'Application submitted successfully'});
 };
 
 const assignJob = async (req, res, next) => {
@@ -162,7 +161,7 @@ const assignJob = async (req, res, next) => {
   const notificationBody = `You have been assigned to the job: ${job.Title}`;
   await sendNotificationToUser(notificationTitle, notificationBody, workerId);
 
-  res.status(StatusCodes.OK).json({ message: 'Job assigned successfully',jobId:job._id });
+  res.status(StatusCodes.OK).json({ message: 'Job assigned successfully' });
 };
 
 const confirmJobCompletion = async (req, res, next) => {
@@ -216,7 +215,7 @@ const confirmJobCompletion = async (req, res, next) => {
     return next(new BadRequestError('Failed to send notification'));
   }
 
-  res.status(StatusCodes.OK).json({ message: 'Job confirmed as completed and worker notified',jobId:job._id });
+  res.status(StatusCodes.OK).json({ message: 'Job confirmed as completed and worker notified' });
 };
 
 
