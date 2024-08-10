@@ -54,4 +54,14 @@ HTTP status codes in your project.
     Visit (https://cloudinary.com/documentation) to understand the library for managing HTTP status codes in your project.
 
 
+7. Firebase pushNotification:
+ 
+    To store send notification, install the `firebase` library:
+
+    ```bash
+    npm install firebase
+    ```
+    required:key.js
+
+    Visit (https://firebase.google.com/docsn) to understand the library.
 
