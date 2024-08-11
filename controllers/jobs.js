@@ -166,7 +166,7 @@ const assignJob = async (req, res, next) => {
   }; 
 
   job.status = 'pending';
-
+ 
   await job.save();
 
   const notificationTitle = 'Job Assigned';
