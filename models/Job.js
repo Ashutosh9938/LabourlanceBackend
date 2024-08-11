@@ -21,6 +21,7 @@ const JobSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Please provide user'],
     },
+    
     userName: {
       type: String,
       required: [true, 'Please provide user name'],
