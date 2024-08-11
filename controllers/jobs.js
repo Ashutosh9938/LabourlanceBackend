@@ -77,7 +77,7 @@ const createJob = async (req, res, next) => {
   } catch (error) {
     console.error('Error creating job:', error.message);
     if (!res.headersSent) {
-      res.status(500).json({ message: 'Server error' });
+      res.status(200).json({ message: 'Server error' });
     }
   }
 };
@@ -130,7 +130,7 @@ const applyForJob = async (req, res, next) => {
     return next(new BadRequestError('Failed to send notification'));
   }
 
-  res.status(StatusCodes.OK).json({ message: 'Application submitted successfully'});
+  res.status(200).json({ message: 'Application submitted successfully'});
 };
 
 const assignJob = async (req, res, next) => {
@@ -173,7 +173,7 @@ const assignJob = async (req, res, next) => {
   const notificationBody = `You have been assigned to the job: ${job.Title}`;
   await sendNotificationToUser(notificationTitle, notificationBody, workerId,jobId);
 
-  res.status(StatusCodes.OK).json({ message: 'Job assigned successfully' });
+  res.status(200).json({ message: 'Job assigned successfully' });
 };
 
 const confirmJobCompletion = async (req, res, next) => {
@@ -227,7 +227,7 @@ const confirmJobCompletion = async (req, res, next) => {
     return next(new BadRequestError('Failed to send notification'));
   }
 
-  res.status(StatusCodes.OK).json({ message: 'Job confirmed as completed and worker notified' });
+  res.status(200).json({ message: 'Job confirmed as completed and worker notified' });
 };
 
 
@@ -239,14 +239,14 @@ const getCompletedJobs = async (req, res, next) => {
     return next(new BadRequestError('Worker not found'));
   }
 
-  res.status(StatusCodes.OK).json({ completedJobs: worker.completedJobs });
+  res.status(200).json({ completedJobs: worker.completedJobs });
 };
 
 
 
 const getAllPosts = async (req, res) => {//shows all the jobs posted by every user
   const jobs = await Job.find({}).limit(10).sort('-createdAt');
-  res.status(StatusCodes.OK).json({ jobs, count: jobs.length });
+  res.status(200).json({ jobs, count: jobs.length });
 };
 
 const getAllJobs = async (req, res) => {
@@ -275,7 +275,7 @@ const getAllJobs = async (req, res) => {
     res.status(200).json({ totalJobs, jobs});
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(200).json({ message: 'Server error' });
   }
 };
 
@@ -295,7 +295,7 @@ const getJob = async (req, res, next) => {
       return next(new NotFoundError(`No job with id ${jobId}`));
     }
 
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       job: {
         id: job._id,
         v: job.__v,
@@ -387,7 +387,7 @@ const updateJob = async (req, res, next) => {
     }
 
     await job.save();
-    res.status(StatusCodes.OK).json( job );
+    res.status(200).json( job );
   } catch (error) {
     if (!res.headersSent) {
       res.status(error instanceof NotFoundError ? StatusCodes.NOT_FOUND : StatusCodes.BAD_REQUEST).json({ error: error.message });
@@ -457,7 +457,7 @@ const showStats = async (req, res) => {
     })
     .reverse();
 
-  res.status(StatusCodes.OK).json({ defaultStats, monthlyApplications });
+  res.status(200).json({ defaultStats, monthlyApplications });
 };
 
 // const uploadProductMedia = async (req, res) => {
