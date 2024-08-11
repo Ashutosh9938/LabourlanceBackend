@@ -163,7 +163,7 @@ const assignJob = async (req, res, next) => {
   job.assignedWorker = {
     workerId: applicant.workerId,
     workerName: applicant.workerName,
-  };
+  }; 
 
   job.status = 'pending';
 
