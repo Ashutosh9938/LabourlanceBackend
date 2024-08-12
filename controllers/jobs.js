@@ -526,4 +526,4 @@ module.exports = {
   assignJob,
   confirmJobCompletion,
   getCompletedJobs
-};
+}; 
