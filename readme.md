@@ -24,7 +24,7 @@ To set up the project and install the required dependencies, follow these steps:
 3. Learn about JSON Web Tokens:
 
     Visit [JWT.io Introduction](https://jwt.io/introduction) for a comprehensive guide on JSON Web Tokens.
- 
+   
 4. HTTP Status Codes Library:
   
     To handle HTTP status codes conveniently, install the `http-status-codes` library:
